@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}AI 파이프라인 빌더 목업{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>드래그 앤 드랍 AI 파이프라인 빌더</h1>
+    <p>
+      비전공자도 문서 기반 RAG 파이프라인을 직관적으로 설계하고 배포할 수 있는 목업 UI입니다.
+      좌측의 블록 라이브러리에서 노드를 선택해 가운데 캔버스로 끌어다 놓고, 우측 속성 패널에서
+      세부 설정을 조정하는 흐름을 시각화했습니다.
+    </p>
+    <div class="hero-actions">
+      <a class="btn primary" href="#builder">캔버스 살펴보기</a>
+      <a class="btn secondary" href="/project-overview">프로젝트 설명 보기</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <h2>빠른 시작</h2>
+    <ol>
+      <li>템플릿을 선택하거나 빈 캔버스를 사용하세요.</li>
+      <li>데이터 업로드 → 인덱싱 → 검색 → LLM → 가드 → 출력 순으로 블록을 연결하세요.</li>
+      <li>샌드박스에서 질문을 테스트한 뒤, 배포 옵션을 선택하세요.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="builder" class="builder-grid">
+  <aside class="panel block-library">
+    <h3>블록 라이브러리</h3>
+    <div class="block-category">
+      <h4>데이터 📁</h4>
+      <ul>
+        <li>파일 업로드</li>
+        <li>클라우드 드라이브</li>
+        <li>웹 크롤러</li>
+      </ul>
+    </div>
+    <div class="block-category">
+      <h4>인덱싱 ⚙️</h4>
+      <ul>
+        <li>텍스트 추출</li>
+        <li>청크 생성</li>
+        <li>임베딩</li>
+      </ul>
+    </div>
+    <div class="block-category">
+      <h4>검색 🔍</h4>
+      <ul>
+        <li>벡터 검색</li>
+        <li>BM25</li>
+        <li>하이브리드 재랭킹</li>
+      </ul>
+    </div>
+    <div class="block-category">
+      <h4>LLM 💬</h4>
+      <ul>
+        <li>프롬프트 작성</li>
+        <li>모델 선택</li>
+        <li>출력 포맷</li>
+      </ul>
+    </div>
+    <div class="block-category">
+      <h4>가드 🛡️</h4>
+      <ul>
+        <li>PII 마스킹</li>
+        <li>금칙어 필터</li>
+        <li>안전 정책</li>
+      </ul>
+    </div>
+    <div class="block-category">
+      <h4>출력 📦</h4>
+      <ul>
+        <li>웹앱 배포</li>
+        <li>위젯 코드</li>
+        <li>API 엔드포인트</li>
+      </ul>
+    </div>
+  </aside>
+
+  <section class="canvas">
+    <div class="canvas-header">
+      <h3>파이프라인 캔버스</h3>
+      <div class="canvas-actions">
+        <button class="ghost">+ 블록 추가</button>
+        <button class="ghost">자동 정렬</button>
+        <button class="ghost">템플릿 불러오기</button>
+      </div>
+    </div>
+    <div class="canvas-body">
+      <div class="node" data-type="data">
+        <h4>파일 업로드</h4>
+        <p>MinIO · PDF, PPT, DOC 지원</p>
+      </div>
+      <div class="node" data-type="index">
+        <h4>인덱싱 파이프라인</h4>
+        <p>청크 800자, overlap 120, nomic-embed-text</p>
+      </div>
+      <div class="node" data-type="search">
+        <h4>하이브리드 검색</h4>
+        <p>pgvector + BM25, top_k=5</p>
+      </div>
+      <div class="node" data-type="llm">
+        <h4>LLM 응답</h4>
+        <p>Ollama llama3.1:8b · 근거 기반 프롬프트</p>
+      </div>
+      <div class="node" data-type="guard">
+        <h4>가드레일</h4>
+        <p>PII 마스킹 · 콘텐츠 안전 필터</p>
+      </div>
+      <div class="node" data-type="output">
+        <h4>웹앱 배포</h4>
+        <p>1클릭 배포 · A/B 테스트</p>
+      </div>
+      <svg class="connections" viewBox="0 0 800 400" preserveAspectRatio="none">
+        <path d="M 60 60 C 200 60, 200 120, 340 120" />
+        <path d="M 340 120 C 480 120, 480 180, 620 180" />
+        <path d="M 620 180 C 760 180, 760 240, 900 240" />
+      </svg>
+    </div>
+    <div class="sandbox">
+      <h4>샌드박스 테스트</h4>
+      <label for="question">질문</label>
+      <textarea id="question" placeholder="예: 국내선 항공권 등급 제한?"></textarea>
+      <label for="answer">예상 응답</label>
+      <div id="answer" class="answer-preview">
+        <p><strong>답변:</strong> 이용자는 국내선 경제석만 이용 가능하며, 업그레이드가 필요할 경우 사전 승인을 받아야 합니다.</p>
+        <p class="evidence">
+          <strong>근거:</strong> 여행 경비 규정 3.2.1 / 페이지 15
+        </p>
+      </div>
+      <div class="sandbox-actions">
+        <button class="primary">테스트 실행</button>
+        <button class="ghost">로그 보기</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel inspector">
+    <h3>속성 패널</h3>
+    <div class="inspector-section">
+      <h4>블록 정보</h4>
+      <p class="muted">현재 선택: <strong>하이브리드 검색 🔍</strong></p>
+    </div>
+    <div class="inspector-section">
+      <label>Top K</label>
+      <input type="range" min="1" max="10" value="5" />
+      <div class="range-value">5 문단</div>
+    </div>
+    <div class="inspector-section">
+      <label>하이브리드 모드</label>
+      <div class="toggle">
+        <span>비활성</span>
+        <input type="checkbox" checked />
+        <span>활성</span>
+      </div>
+    </div>
+    <div class="inspector-section">
+      <label>재랭킹</label>
+      <select>
+        <option>ColBERT-lite</option>
+        <option>Cross-encoder</option>
+        <option>Off</option>
+      </select>
+    </div>
+    <div class="inspector-section">
+      <h4>실행 메트릭</h4>
+      <ul class="metrics">
+        <li>평균 지연: <strong>1.8s</strong></li>
+        <li>토큰 사용량: <strong>1.2k</strong></li>
+        <li>성공률: <strong>99%</strong></li>
+      </ul>
+    </div>
+    <div class="inspector-section">
+      <h4>배포 옵션</h4>
+      <button class="primary full-width">웹앱 생성</button>
+      <button class="secondary full-width">위젯 코드 복사</button>
+      <button class="ghost full-width">API 엔드포인트 보기</button>
+    </div>
+  </aside>
+</section>
+
+<section class="callout">
+  <h2>AI 파이프라인을 빠르게 실험하고 배포하세요.</h2>
+  <p>
+    로컬 무료 스택 기반으로 설계되어 교육 현장과 사내 PoC에 부담 없이 도입할 수 있습니다. 실제 기능 개발 전,
+    사용자 여정과 인터페이스를 점검하는 용도로 활용하세요.
+  </p>
+</section>
+{% endblock %}
