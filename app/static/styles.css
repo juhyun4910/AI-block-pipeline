@@ -22,6 +22,10 @@ body {
   color: var(--text);
 }
 
+.hidden {
+  display: none !important;
+}
+
 .top-nav {
   display: flex;
   justify-content: space-between;
@@ -152,19 +156,57 @@ body {
   color: var(--text);
 }
 
-.block-category ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.block-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.block-category li {
-  padding: 10px 12px;
+.block-item {
+  width: 100%;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 8px;
+  border-radius: 12px;
+  padding: 12px 14px;
   background: #f8fafc;
-  font-size: 0.95rem;
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.block-item:active {
+  cursor: grabbing;
+}
+
+.block-item:hover,
+.block-item:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+}
+
+.block-item[data-type="data"] {
+  border-left: 6px solid #2563eb;
+}
+
+.block-item[data-type="index"] {
+  border-left: 6px solid #7c3aed;
+}
+
+.block-item[data-type="search"] {
+  border-left: 6px solid #0f766e;
+}
+
+.block-item[data-type="llm"] {
+  border-left: 6px solid #f97316;
+}
+
+.block-item[data-type="guard"] {
+  border-left: 6px solid #dc2626;
+}
+
+.block-item[data-type="output"] {
+  border-left: 6px solid #16a34a;
 }
 
 .canvas {
@@ -218,6 +260,11 @@ button.secondary {
   cursor: pointer;
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 button.ghost.full-width,
 button.primary.full-width,
 button.secondary.full-width {
@@ -225,69 +272,78 @@ button.secondary.full-width {
 }
 
 .canvas-body {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.node {
-  background: white;
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
   position: relative;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  min-height: 420px;
+  padding: 16px;
+  overflow: hidden;
 }
 
-.node::after {
-  content: "";
-  position: absolute;
-  left: 18px;
-  bottom: -14px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 3px solid white;
-  background: currentColor;
-}
-
-.node[data-type="data"] {
-  border-left: 6px solid #60a5fa;
-  color: #1d4ed8;
-}
-
-.node[data-type="index"] {
-  border-left: 6px solid #a855f7;
-  color: #7c3aed;
-}
-
-.node[data-type="search"] {
-  border-left: 6px solid #14b8a6;
-  color: #0f766e;
-}
-
-.node[data-type="llm"] {
-  border-left: 6px solid #f97316;
-  color: #c2410c;
-}
-
-.node[data-type="guard"] {
-  border-left: 6px solid var(--danger);
-  color: #b91c1c;
-}
-
-.node[data-type="output"] {
-  border-left: 6px solid var(--success);
-  color: #15803d;
-}
-
-.connections {
+.canvas-empty {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  stroke: rgba(59, 130, 246, 0.25);
-  fill: none;
-  stroke-width: 4;
-  stroke-linecap: round;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.canvas-empty.hidden {
+  display: none;
+}
+
+.canvas-node {
+  position: absolute;
+  width: 220px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.canvas-node:active {
+  cursor: grabbing;
+}
+
+.canvas-node.selected {
+  box-shadow: 0 18px 34px rgba(59, 130, 246, 0.35);
+  transform: translateY(-2px);
+}
+
+.node-header {
+  padding: 10px 16px;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  color: white;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.node-type {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.node-body {
+  padding: 18px 20px 20px 20px;
+}
+
+.node-body h4 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.node-body p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .sandbox {
