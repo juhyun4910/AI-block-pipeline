@@ -6,6 +6,7 @@
   }
 
   const emptyState = document.getElementById("canvas-empty-state");
+  const edgesSvg = document.getElementById("edges-layer");
   const inspectorSelection = document.getElementById("inspector-selection");
   const inspectorDescription = document.getElementById("inspector-description");
   const inspectorConfig = document.getElementById("config-text");
@@ -24,6 +25,9 @@
   let selectedNode = null;
   let activeDrag = null;
   const typeCounts = {};
+  let nodeIdSeq = 1;
+  const edges = []; // { id, fromId, toId, fromSide, toSide }
+  const linking = { active: false, fromId: null, fromSide: null, temp: null };
 
   const TYPE_METADATA = {
     data: {
@@ -1037,6 +1041,71 @@
     deleteButton?.setAttribute("disabled", "true");
   }
 
+  function clearSvg() {
+    if (!edgesSvg) return;
+    while (edgesSvg.firstChild) edgesSvg.removeChild(edgesSvg.firstChild);
+  }
+
+  function pathForPoints(x1, y1, x2, y2) {
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const cx = Math.max(40, dx * 0.5);
+    const cy = Math.max(0, dy * 0.2);
+    const c1x = x1 + (x2 >= x1 ? cx : -cx);
+    const c1y = y1 + (y2 >= y1 ? cy : -cy);
+    const c2x = x2 + (x2 >= x1 ? -cx : cx);
+    const c2y = y2 + (y2 >= y1 ? -cy : cy);
+    return `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`;
+  }
+
+  function getPortCenter(node, side) {
+    const rect = node.getBoundingClientRect();
+    const crect = canvas.getBoundingClientRect();
+    const xLeft = rect.left - crect.left;
+    const yTop = rect.top - crect.top;
+    const w = rect.width;
+    const h = rect.height;
+    switch (side) {
+      case "left": return { x: xLeft, y: yTop + h / 2 };
+      case "right": return { x: xLeft + w, y: yTop + h / 2 };
+      case "top": return { x: xLeft + w / 2, y: yTop };
+      case "bottom": return { x: xLeft + w / 2, y: yTop + h };
+      default: return { x: xLeft + w / 2, y: yTop + h / 2 };
+    }
+  }
+
+  function findNodeById(id) {
+    return canvas.querySelector(`.canvas-node[data-id="${id}"]`);
+  }
+
+  function renderEdges() {
+    if (!edgesSvg) return;
+    clearSvg();
+    const draw = (fromId, fromSide, toId, toSide, className = "edge-path") => {
+      const fromNode = findNodeById(fromId);
+      const toNode = findNodeById(toId);
+      if (!fromNode || !toNode) return;
+      const a = getPortCenter(fromNode, fromSide);
+      const b = getPortCenter(toNode, toSide);
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("class", className);
+      path.setAttribute("d", pathForPoints(a.x, a.y, b.x, b.y));
+      edgesSvg.appendChild(path);
+    };
+    edges.forEach((e) => draw(e.fromId, e.fromSide, e.toId, e.toSide));
+    if (linking.active && linking.temp) {
+      const { x, y } = linking.temp;
+      const fromNode = findNodeById(linking.fromId);
+      if (fromNode) {
+        const a = getPortCenter(fromNode, linking.fromSide);
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("class", "edge-path temp");
+        path.setAttribute("d", pathForPoints(a.x, a.y, x, y));
+        edgesSvg.appendChild(path);
+      }
+    }
+  }
+
   function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
   }
@@ -1345,7 +1414,7 @@
     node.addEventListener("pointerdown", (event) => {
       if (event.button !== 0) return;
       const target = event.target;
-      if (target.closest && target.closest(".node-action")) return;
+      if (target.closest && (target.closest(".node-action") || target.closest(".node-port"))) return;
       selectNode(node);
       node.setPointerCapture(event.pointerId);
       const rect = node.getBoundingClientRect();
@@ -1367,6 +1436,7 @@
       const y = clamp(event.clientY - canvasRect.top - offsetY, 0, canvasRect.height - draggedNode.offsetHeight);
       draggedNode.style.left = `${x}px`;
       draggedNode.style.top = `${y}px`;
+      renderEdges();
     });
 
     const endDrag = (event) => {
@@ -1379,6 +1449,30 @@
     node.addEventListener("pointercancel", endDrag);
   }
 
+  function attachPorts(node) {
+    const ports = document.createElement("div");
+    ports.className = "node-ports";
+    const sides = ["left", "right"]; // 좌/우 포트 제공
+    sides.forEach((side) => {
+      const port = document.createElement("div");
+      port.className = `node-port ${side}`;
+      port.dataset.side = side;
+      port.title = side;
+      port.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+        const nodeId = node.dataset.id;
+        linking.active = true;
+        linking.fromId = nodeId;
+        linking.fromSide = side;
+        const crect = canvas.getBoundingClientRect();
+        linking.temp = { x: event.clientX - crect.left, y: event.clientY - crect.top };
+        renderEdges();
+      });
+      ports.appendChild(port);
+    });
+    node.appendChild(ports);
+  }
+
   function createNode({ type, title, description, overrides = {}, position }) {
     const meta = TYPE_METADATA[type] ?? { label: type, color: "#64748b" };
     const config = buildDefaultConfig(type, overrides);
@@ -1388,6 +1482,7 @@
     node.dataset.type = type;
     node.dataset.description = description ?? "";
     node.dataset.title = title ?? config.label;
+    node.dataset.id = String(nodeIdSeq++);
     updateNodeDataset(node, config);
 
     node.innerHTML = `
@@ -1400,13 +1495,14 @@
       </div>
     `;
 
+    attachPorts(node);
     makeNodeDraggable(node);
     node.addEventListener("click", () => selectNode(node, { forceRefresh: true }));
 
     canvas.appendChild(node);
     const canvasRect = canvas.getBoundingClientRect();
-    const width = node.offsetWidth || 220;
-    const height = node.offsetHeight || 140;
+    const width = node.offsetWidth || 180;
+    const height = node.offsetHeight || 120;
     const defaultX = canvasRect.width / 2 - width / 2;
     const defaultY = canvasRect.height / 2 - height / 2;
     const { x, y } = position ?? { x: defaultX, y: defaultY };
@@ -1415,6 +1511,7 @@
 
     updateEmptyState();
     selectNode(node, { skipScroll: true, forceRefresh: true });
+    renderEdges();
     return node;
   }
 
@@ -1464,6 +1561,33 @@
     event.dataTransfer.dropEffect = "copy";
   }
 
+  // 연결 드래그 중 포인터 이동 → 임시 선 업데이트
+  canvas.addEventListener("pointermove", (event) => {
+    if (!linking.active) return;
+    const crect = canvas.getBoundingClientRect();
+    linking.temp = { x: clamp(event.clientX - crect.left, 0, crect.width), y: clamp(event.clientY - crect.top, 0, crect.height) };
+    renderEdges();
+  });
+
+  // 포트 위에서 포인터 업 → 연결 완료
+  canvas.addEventListener("pointerup", (event) => {
+    if (!linking.active) return;
+    const target = event.target;
+    if (target && target.classList && target.classList.contains("node-port")) {
+      const toNode = target.closest(".canvas-node");
+      const toId = toNode?.dataset.id;
+      const toSide = target.dataset.side;
+      if (toId && toSide && toId !== linking.fromId) {
+        edges.push({ id: `${linking.fromId}-${toId}-${Date.now()}`, fromId: linking.fromId, toId, fromSide: linking.fromSide, toSide });
+      }
+    }
+    linking.active = false;
+    linking.fromId = null;
+    linking.fromSide = null;
+    linking.temp = null;
+    renderEdges();
+  });
+
   function duplicateSelectedNode() {
     if (!selectedNode) return;
     const rect = selectedNode.getBoundingClientRect();
@@ -1486,14 +1610,23 @@
   function deleteSelectedNode() {
     if (!selectedNode) return;
     const nodeToRemove = selectedNode;
+    const id = nodeToRemove.dataset.id;
+    for (let i = edges.length - 1; i >= 0; i--) {
+      if (edges[i].fromId === id || edges[i].toId === id) {
+        edges.splice(i, 1);
+      }
+    }
     resetInspector();
     nodeToRemove.remove();
     updateEmptyState();
+    renderEdges();
   }
 
   function clearCanvas() {
     canvas.querySelectorAll(".canvas-node").forEach((node) => node.remove());
     Object.keys(typeCounts).forEach((key) => (typeCounts[key] = 0));
+    edges.splice(0, edges.length);
+    clearSvg();
     resetInspector();
     updateEmptyState();
   }
@@ -1546,13 +1679,14 @@
     const canvasRect = canvas.getBoundingClientRect();
     const spacing = canvasRect.width / (nodes.length + 1);
     nodes.forEach((node, index) => {
-      const width = node.offsetWidth || 220;
-      const height = node.offsetHeight || 140;
+      const width = node.offsetWidth || 180;
+      const height = node.offsetHeight || 120;
       const x = spacing * (index + 1) - width / 2;
       const y = canvasRect.height / 2 - height / 2;
       node.style.left = `${clamp(x, 0, Math.max(canvasRect.width - width, 0))}px`;
       node.style.top = `${clamp(y, 0, Math.max(canvasRect.height - height, 0))}px`;
     });
+    renderEdges();
   }
 
   function handleTemplatePillClick(event) {
@@ -1574,8 +1708,7 @@
   deleteButton?.addEventListener("click", deleteSelectedNode);
   clearButton?.addEventListener("click", clearCanvas);
   autoArrangeButton?.addEventListener("click", autoArrange);
-  applyTemplateButton?.addEventListener("click", () => loadTemplate(templateSelector.value));
-  templatePills.forEach((pill) => pill.addEventListener("click", handleTemplatePillClick));
+  // 템플릿 UI 제거됨
 
   document.addEventListener("keydown", (event) => {
     if ((event.key === "Delete" || event.key === "Backspace") && selectedNode) {
@@ -1584,6 +1717,7 @@
   });
 
   window.addEventListener("load", () => {
-    loadTemplate(templateSelector?.value ?? "document-qa");
+    // 초기 템플릿 자동 로드 제거 (빈 캔버스 시작)
+    renderEdges();
   });
 })();

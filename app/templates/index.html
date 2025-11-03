@@ -28,20 +28,7 @@
   <aside class="panel block-library">
     <h3>블록 라이브러리</h3>
     <p class="muted">필요한 블록을 캔버스로 드래그 앤 드랍하고, 우측 속성 패널에서 세부 파라미터를 조정하세요.</p>
-    <div class="template-callout">
-      <h4>빠른 시작 템플릿</h4>
-      <p class="muted">추천 조합을 불러온 뒤 자유롭게 수정하세요.</p>
-      <div class="template-actions">
-        <button class="template-pill" data-template="document-qa">문서 Q&A (표준)</button>
-        <button class="template-pill" data-template="regulation">규정/법령 집중</button>
-        <button class="template-pill" data-template="product-faq">제품 FAQ</button>
-      </div>
-      <ul class="template-hints">
-        <li><strong>문서 Q&A:</strong> chunk 800 / overlap 120, top_k=5, temp 0.2</li>
-        <li><strong>규정/법령:</strong> top_k=3, JSON 출력, 근거 검증</li>
-        <li><strong>제품 FAQ:</strong> top_k 5~8, temp 0.5, 스트리밍 on</li>
-      </ul>
-    </div>
+    
     <div class="block-category" data-category="데이터">
       <h4>데이터 📁</h4>
       <div class="block-list">
@@ -161,20 +148,12 @@
     <div class="canvas-header">
       <h3>파이프라인 캔버스</h3>
       <div class="canvas-actions">
-        <label class="template-select">
-          <span>템플릿</span>
-          <select id="template-selector">
-            <option value="document-qa">문서 Q&A</option>
-            <option value="regulation">규정/법령 집중</option>
-            <option value="product-faq">제품 FAQ</option>
-          </select>
-        </label>
-        <button class="ghost" id="apply-template">템플릿 적용</button>
         <button class="ghost" id="clear-canvas">초기화</button>
         <button class="ghost" id="auto-arrange">자동 정렬</button>
       </div>
     </div>
     <div class="canvas-body" id="pipeline-canvas" data-empty-text="블록을 끌어다 여기에 배치하세요.">
+      <svg id="edges-layer" class="edges-layer"></svg>
       <div class="canvas-empty" id="canvas-empty-state">
         <p>블록을 끌어다 여기에 배치하세요.</p>
         <p class="muted">템플릿을 불러오면 기본 파이프라인이 자동으로 구성됩니다.</p>
