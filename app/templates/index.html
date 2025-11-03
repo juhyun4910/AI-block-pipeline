@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}AI 파이프라인 빌더 목업{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>드래그 앤 드랍 AI 파이프라인 빌더</h1>
+    <p>
+      비전공자도 문서 기반 RAG 파이프라인을 직관적으로 설계하고 배포할 수 있는 인터랙티브 목업입니다.
+      좌측의 블록 라이브러리에서 노드를 끌어다 가운데 캔버스에 배치하고, 우측 속성 패널에서 세부 설정을
+      실시간으로 조정할 수 있습니다.
+    </p>
+    <div class="hero-actions">
+      <a class="btn primary" href="#builder">캔버스 살펴보기</a>
+      <a class="btn secondary" href="/project-overview">프로젝트 설명 보기</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <h2>빠른 시작</h2>
+    <ol>
+      <li>템플릿을 불러오거나 빈 캔버스를 사용하세요.</li>
+      <li>데이터 업로드 → 인덱싱 → 검색 → LLM → 가드 → 출력 순으로 블록을 연결하세요.</li>
+      <li>샌드박스에서 질문을 테스트한 뒤, 배포 옵션을 선택하세요.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="builder" class="builder-grid">
+  <aside class="panel block-library">
+    <h3>블록 라이브러리</h3>
+    <p class="muted">필요한 블록을 캔버스로 드래그 앤 드랍하고, 우측 속성 패널에서 세부 파라미터를 조정하세요.</p>
+    <div class="template-callout">
+      <h4>빠른 시작 템플릿</h4>
+      <p class="muted">추천 조합을 불러온 뒤 자유롭게 수정하세요.</p>
+      <div class="template-actions">
+        <button class="template-pill" data-template="document-qa">문서 Q&A (표준)</button>
+        <button class="template-pill" data-template="regulation">규정/법령 집중</button>
+        <button class="template-pill" data-template="product-faq">제품 FAQ</button>
+      </div>
+      <ul class="template-hints">
+        <li><strong>문서 Q&A:</strong> chunk 800 / overlap 120, top_k=5, temp 0.2</li>
+        <li><strong>규정/법령:</strong> top_k=3, JSON 출력, 근거 검증</li>
+        <li><strong>제품 FAQ:</strong> top_k 5~8, temp 0.5, 스트리밍 on</li>
+      </ul>
+    </div>
+    <div class="block-category" data-category="데이터">
+      <h4>데이터 📁</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="data" data-title="문서 업로드" data-description="로컬/MinIO 업로드 + 자동 인덱싱" data-config='{"sourceType":"upload"}'>
+          문서 업로드
+        </button>
+        <button class="block-item" draggable="true" data-type="data" data-title="보관소 동기화" data-description="Google Drive · Notion 커넥터" data-config='{"sourceType":"google-drive","autoIndexing":true}'>
+          보관소 동기화
+        </button>
+        <button class="block-item" draggable="true" data-type="data" data-title="URL 크롤러" data-description="https 사이트 수집 · 중복 검증" data-config='{"sourceType":"url","duplicateCheck":true}'>
+          URL 크롤러
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="전처리">
+      <h4>전처리 🧹</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="preprocess" data-title="텍스트 정리" data-description="공백 정규화 + 언어 감지" data-config='{"normalization":true}'>
+          텍스트 정리
+        </button>
+        <button class="block-item" draggable="true" data-type="preprocess" data-title="표/코드 유지" data-description="표/코드 보존 + PII 필터" data-config='{"preserveTables":true,"piiMasking":true}'>
+          표/코드 유지
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="인덱싱">
+      <h4>인덱싱 ⚙️</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="index" data-title="청크 생성" data-description="Chunk 800 / overlap 120" data-config='{"chunkSize":800,"overlap":120}'>
+          청크 생성
+        </button>
+        <button class="block-item" draggable="true" data-type="index" data-title="임베딩 저장" data-description="nomic-embed-text · cosine" data-config='{"embeddingModel":"nomic-embed-text"}'>
+          임베딩 저장
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="검색">
+      <h4>검색 🔍</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="search" data-title="하이브리드 검색" data-description="pgvector + BM25" data-config='{"hybrid":true}'>
+          하이브리드 검색
+        </button>
+        <button class="block-item" draggable="true" data-type="search" data-title="키워드 증폭" data-description="키워드 부스트 & 중복 제거" data-config='{"keywordBoost":0.8,"dedupe":true}'>
+          키워드 증폭
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="LLM">
+      <h4>LLM 💬</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="llm" data-title="근거 기반 응답" data-description="컨텍스트 강제 + 근거 나열" data-config='{"temperature":0.2,"maxTokens":512}'>
+          근거 기반 응답
+        </button>
+        <button class="block-item" draggable="true" data-type="llm" data-title="JSON 구조화" data-description="정형 출력 & 검증" data-config='{"outputFormat":"json"}'>
+          JSON 구조화
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="가드">
+      <h4>가드 🛡️</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="guard" data-title="PII 필터" data-description="이메일/전화/주민번호 마스킹" data-config='{"maskEmail":true,"maskPhone":true,"maskSsn":true}'>
+          PII 필터
+        </button>
+        <button class="block-item" draggable="true" data-type="guard" data-title="정책 차단" data-description="욕설/증오/불법 유도 차단" data-config='{"blockCategories":["abuse","hate","illegal"]}'>
+          정책 차단
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="출력">
+      <h4>출력 📦</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="output" data-title="웹앱 공개" data-description="근거 하이라이트 + 링크 공유" data-config='{"displayMode":"webapp"}'>
+          웹앱 공개
+        </button>
+        <button class="block-item" draggable="true" data-type="output" data-title="위젯/임베드" data-description="Widget · Markdown 내보내기" data-config='{"displayMode":"widget","exportOptions":["markdown"]}'>
+          위젯/임베드
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="오케스트레이션">
+      <h4>오케스트레이션 🔀</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="orchestration" data-title="조건 분기" data-description="점수/메타 기반 분기" data-config='{"parallel":false}'>
+          조건 분기
+        </button>
+        <button class="block-item" draggable="true" data-type="orchestration" data-title="병렬 실행" data-description="병렬 처리 + 합류 규칙" data-config='{"parallel":true,"joinStrategy":"all-success"}'>
+          병렬 실행
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="관측">
+      <h4>관측/비용 📊</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="observability" data-title="실행 로그" data-description="토큰/지연 모니터링" data-config='{"costMeter":true}'>
+          실행 로그
+        </button>
+        <button class="block-item" draggable="true" data-type="observability" data-title="알림 훅" data-description="Slack/Webhook 알림" data-config='{"alertHook":""}'>
+          알림 훅
+        </button>
+      </div>
+    </div>
+    <div class="block-category" data-category="접근">
+      <h4>접근 제어 🔐</h4>
+      <div class="block-list">
+        <button class="block-item" draggable="true" data-type="access" data-title="역할 관리" data-description="팀/조직 역할 권한" data-config='{"visibility":"team"}'>
+          역할 관리
+        </button>
+        <button class="block-item" draggable="true" data-type="access" data-title="사용량 제한" data-description="일/월 토큰 한도" data-config='{"dailyQuota":5000}'>
+          사용량 제한
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <section class="canvas">
+    <div class="canvas-header">
+      <h3>파이프라인 캔버스</h3>
+      <div class="canvas-actions">
+        <label class="template-select">
+          <span>템플릿</span>
+          <select id="template-selector">
+            <option value="document-qa">문서 Q&A</option>
+            <option value="regulation">규정/법령 집중</option>
+            <option value="product-faq">제품 FAQ</option>
+          </select>
+        </label>
+        <button class="ghost" id="apply-template">템플릿 적용</button>
+        <button class="ghost" id="clear-canvas">초기화</button>
+        <button class="ghost" id="auto-arrange">자동 정렬</button>
+      </div>
+    </div>
+    <div class="canvas-body" id="pipeline-canvas" data-empty-text="블록을 끌어다 여기에 배치하세요.">
+      <div class="canvas-empty" id="canvas-empty-state">
+        <p>블록을 끌어다 여기에 배치하세요.</p>
+        <p class="muted">템플릿을 불러오면 기본 파이프라인이 자동으로 구성됩니다.</p>
+      </div>
+    </div>
+    <div class="sandbox">
+      <h4>샌드박스 테스트</h4>
+      <label for="question">질문</label>
+      <textarea id="question" placeholder="예: 국내선 항공권 등급 제한?"></textarea>
+      <label for="answer">예상 응답</label>
+      <div id="answer" class="answer-preview">
+        <p><strong>답변:</strong> 이용자는 국내선 경제석만 이용 가능하며, 업그레이드가 필요할 경우 사전 승인을 받아야 합니다.</p>
+        <p class="evidence"><strong>근거:</strong> 여행 경비 규정 3.2.1 / 페이지 15</p>
+      </div>
+      <div class="sandbox-actions">
+        <button class="primary">테스트 실행</button>
+        <button class="ghost">로그 보기</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel inspector">
+    <h3>속성 패널</h3>
+    <div class="inspector-section">
+      <h4>블록 정보</h4>
+      <p class="muted">현재 선택: <strong id="inspector-selection">블록을 선택하세요</strong></p>
+      <p id="inspector-description" class="inspector-description">캔버스에서 블록을 선택하면 상세 설명이 표시됩니다.</p>
+    </div>
+    <div class="inspector-section">
+      <h4>공통 설정</h4>
+      <div id="inspector-common" class="form-grid"></div>
+    </div>
+    <div class="inspector-section">
+      <h4>세부 설정</h4>
+      <div id="inspector-specific" class="form-grid"></div>
+    </div>
+    <div class="inspector-section">
+      <p id="inspector-validation" class="validation muted">필수 항목을 입력하면 검증 결과가 표시됩니다.</p>
+    </div>
+    <div class="inspector-section">
+      <label for="config-text">구성 미리보기</label>
+      <textarea id="config-text" readonly placeholder="선택된 블록의 구성 JSON"></textarea>
+    </div>
+    <div class="inspector-section">
+      <label>실행 메트릭</label>
+      <ul class="metrics" id="inspector-metrics">
+        <li>평균 지연: <strong>—</strong></li>
+        <li>토큰 사용량: <strong>—</strong></li>
+        <li>성공률: <strong>—</strong></li>
+      </ul>
+    </div>
+    <div class="inspector-section">
+      <h4>작업</h4>
+      <button class="primary full-width" id="duplicate-node" disabled>블록 복제</button>
+      <button class="secondary full-width" id="delete-node" disabled>블록 삭제</button>
+    </div>
+    <div class="inspector-section">
+      <h4>배포 옵션</h4>
+      <button class="primary full-width">웹앱 생성</button>
+      <button class="secondary full-width">위젯 코드 복사</button>
+      <button class="ghost full-width">API 엔드포인트 보기</button>
+    </div>
+  </aside>
+</section>
+
+<section class="callout">
+  <h2>AI 파이프라인을 빠르게 실험하고 배포하세요.</h2>
+  <p>
+    로컬 무료 스택 기반으로 설계되어 교육 현장과 사내 PoC에 부담 없이 도입할 수 있습니다. 실제 기능 개발 전,
+    사용자 여정과 인터페이스를 점검하는 용도로 활용하세요.
+  </p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='builder.js') }}" defer></script>
+{% endblock %}
