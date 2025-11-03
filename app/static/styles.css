@@ -162,6 +162,45 @@ body {
   gap: 8px;
 }
 
+.template-callout {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.template-pill {
+  border: none;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent);
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.template-pill:hover,
+.template-pill:focus {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.template-hints {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
 .block-item {
   width: 100%;
   border: 1px solid var(--border);
@@ -208,6 +247,18 @@ body {
 .block-item[data-type="output"] {
   border-left: 6px solid #16a34a;
 }
+.block-item[data-type="preprocess"] {
+  border-left: 6px solid #6366f1;
+}
+.block-item[data-type="orchestration"] {
+  border-left: 6px solid #f59e0b;
+}
+.block-item[data-type="observability"] {
+  border-left: 6px solid #14b8a6;
+}
+.block-item[data-type="access"] {
+  border-left: 6px solid #8b5cf6;
+}
 
 .canvas {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(14, 165, 233, 0.08));
@@ -228,7 +279,23 @@ body {
 
 .canvas-actions {
   display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.template-select {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.template-select select {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  font-size: 0.95rem;
 }
 
 button.ghost {
@@ -339,6 +406,13 @@ button.secondary.full-width {
   font-size: 1.05rem;
 }
 
+.node-description {
+  color: var(--muted);
+  margin-top: 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 .node-body p {
   margin: 0;
   color: var(--muted);
@@ -386,6 +460,133 @@ textarea {
   border-radius: 12px;
   padding: 16px;
   border: 1px solid var(--border);
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  background: #f8fafc;
+  color: var(--text);
+}
+
+.form-field textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.form-field input[readonly],
+.form-field textarea[readonly],
+.form-field select:disabled {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.toggle-field {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle-wrapper input[type="checkbox"] {
+  width: 40px;
+  height: 20px;
+  appearance: none;
+  background: #cbd5f5;
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggle-wrapper input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+.toggle-wrapper input[type="checkbox"]:checked {
+  background: var(--accent);
+}
+
+.toggle-wrapper input[type="checkbox"]:checked::after {
+  transform: translateX(20px);
+}
+
+.checkbox-group > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkbox-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #f8fafc;
+}
+
+.checkbox-item input {
+  width: 16px;
+  height: 16px;
+}
+
+.helper {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.action-map table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f8fafc;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.action-map th,
+.action-map td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.validation {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.validation.warn {
+  color: var(--danger);
+}
+
+.validation.ok {
+  color: var(--success);
 }
 
 .inspector-section h4 {
