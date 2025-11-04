@@ -82,6 +82,10 @@
     },
   };
 
+  TYPE_METADATA.upload = { ...TYPE_METADATA.data, label: "업로드" };
+  TYPE_METADATA.embedding = { ...TYPE_METADATA.index, label: "임베딩" };
+  TYPE_METADATA.deploy = { ...TYPE_METADATA.output, label: "테스트·배포" };
+
   const EMBEDDING_DIMENSIONS = {
     "nomic-embed-text": 768,
     "all-minilm-l6-v2": 384,
@@ -830,6 +834,10 @@
     ],
   };
 
+  BLOCK_FIELDS.upload = BLOCK_FIELDS.data;
+  BLOCK_FIELDS.embedding = BLOCK_FIELDS.index;
+  BLOCK_FIELDS.deploy = BLOCK_FIELDS.output;
+
   const TEMPLATES = {
     "document-qa": {
       name: "문서 Q&A",
@@ -1323,15 +1331,16 @@
 
   function validateConfig(type, config) {
     const messages = [];
-    if (type === "data" && config.sourceType === "url") {
+    const isUpload = type === "data" || type === "upload";
+    if (isUpload && (config.sourceType === "url" || config.source === "url")) {
       if (!config.allowedUrlScheme || !config.allowedUrlScheme.startsWith("https://")) {
         messages.push("URL 소스는 https:// 스킴만 허용됩니다.");
       }
     }
-    if (type === "data" && config.maxFileSizeMb > 50) {
+    if (isUpload && config.maxFileSizeMb > 50) {
       messages.push("파일 최대 크기가 50MB를 초과하면 업로드 지연이 발생할 수 있습니다.");
     }
-    if (type === "index") {
+    if (type === "index" || type === "embedding") {
       const expectedDim = EMBEDDING_DIMENSIONS[config.embeddingModel];
       if (expectedDim && expectedDim !== config.embeddingDim) {
         messages.push(`임베딩 차원(${config.embeddingDim})이 모델(${expectedDim})과 다릅니다. 재설정이 필요합니다.`);
