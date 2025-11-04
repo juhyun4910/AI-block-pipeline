@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}AI 파이프라인 빌더 목업{% endblock %}
+{% block title %}Drag & Drop RAG 파이프라인 빌더{% endblock %}
 {% block content %}
 <section class="hero">
   <div>
-    <h1>드래그 앤 드랍 AI 파이프라인 빌더</h1>
+    <h1>🧱 Drag & Drop AI Pipeline Builder</h1>
     <p>
-      비전공자도 문서 기반 RAG 파이프라인을 직관적으로 설계하고 배포할 수 있는 인터랙티브 목업입니다.
-      좌측의 블록 라이브러리에서 노드를 끌어다 가운데 캔버스에 배치하고, 우측 속성 패널에서 세부 설정을
-      실시간으로 조정할 수 있습니다.
+      문서를 올리고, 전처리·임베딩·검색·LLM·가드레일까지 블록으로 이어 붙인 뒤 Freeze 한 번으로
+      웹앱 · 위젯 · API 배포까지 이어지는 원페이지 인터랙티브 데모입니다.
+      좌측 블록 라이브러리에서 필요한 스텝을 끌어와 캔버스에 배치하고, 우측 패널에서 파라미터를 바로 조정하세요.
     </p>
     <div class="hero-actions">
       <a class="btn primary" href="#builder">캔버스 살펴보기</a>
@@ -18,8 +18,8 @@
     <h2>빠른 시작</h2>
     <ol>
       <li>템플릿을 불러오거나 빈 캔버스를 사용하세요.</li>
-      <li>데이터 업로드 → 인덱싱 → 검색 → LLM → 가드 → 출력 순으로 블록을 연결하세요.</li>
-      <li>샌드박스에서 질문을 테스트한 뒤, 배포 옵션을 선택하세요.</li>
+      <li>업로드 → 전처리 → 임베딩 → 검색 → LLM → 가드레일 블록을 순서대로 연결하세요.</li>
+      <li>샘플 질문으로 품질을 검증하고 Freeze로 스냅샷을 고정한 뒤 배포 방식을 고르세요.</li>
     </ol>
   </div>
 </section>
@@ -29,116 +29,83 @@
     <h3>블록 라이브러리</h3>
     <p class="muted">필요한 블록을 캔버스로 드래그 앤 드랍하고, 우측 속성 패널에서 세부 파라미터를 조정하세요.</p>
     
-    <div class="block-category" data-category="데이터">
-      <h4>데이터 📁</h4>
+    <div class="block-category" data-category="업로드">
+      <h4>1. 업로드 📂</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="data" data-title="문서 업로드" data-description="로컬/MinIO 업로드 + 자동 인덱싱" data-config='{"sourceType":"upload"}'>
+        <button class="block-item" draggable="true" data-type="upload" data-title="문서 업로드" data-description="이름 · 설명 · 권한 설정 후 Presigned URL 업로드" data-config='{"sourceType":"upload","duplicateCheck":true}'>
           문서 업로드
         </button>
-        <button class="block-item" draggable="true" data-type="data" data-title="보관소 동기화" data-description="Google Drive · Notion 커넥터" data-config='{"sourceType":"google-drive","autoIndexing":true}'>
-          보관소 동기화
-        </button>
-        <button class="block-item" draggable="true" data-type="data" data-title="URL 크롤러" data-description="https 사이트 수집 · 중복 검증" data-config='{"sourceType":"url","duplicateCheck":true}'>
-          URL 크롤러
+        <button class="block-item" draggable="true" data-type="upload" data-title="버전 관리" data-description="Freeze 전에 SHA-256 중복 검사" data-config='{"duplicateCheck":true,"autoIndexing":false,"presignedExpiry":30}'>
+          버전 관리
         </button>
       </div>
     </div>
     <div class="block-category" data-category="전처리">
-      <h4>전처리 🧹</h4>
+      <h4>2. 전처리 🔧</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="preprocess" data-title="텍스트 정리" data-description="공백 정규화 + 언어 감지" data-config='{"normalization":true}'>
-          텍스트 정리
+        <button class="block-item" draggable="true" data-type="preprocess" data-title="정규화 & 언어 감지" data-description="공백/개행 정리 + 자동 언어 변환" data-config='{"normalization":true,"language":"auto"}'>
+          정규화 & 언어 감지
         </button>
-        <button class="block-item" draggable="true" data-type="preprocess" data-title="표/코드 유지" data-description="표/코드 보존 + PII 필터" data-config='{"preserveTables":true,"piiMasking":true}'>
-          표/코드 유지
+        <button class="block-item" draggable="true" data-type="preprocess" data-title="표·코드 보존" data-description="표/코드 태깅 + PII 마스킹" data-config='{"preserveTables":true,"piiMasking":true}'>
+          표·코드 보존
+        </button>
+        <button class="block-item" draggable="true" data-type="preprocess" data-title="사용자 필터" data-description="정규식 기반 필터링" data-config='{"customRegex":"(?i)draft"}'>
+          사용자 필터
         </button>
       </div>
     </div>
-    <div class="block-category" data-category="인덱싱">
-      <h4>인덱싱 ⚙️</h4>
+    <div class="block-category" data-category="임베딩">
+      <h4>3. 임베딩 🧠</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="index" data-title="청크 생성" data-description="Chunk 800 / overlap 120" data-config='{"chunkSize":800,"overlap":120}'>
-          청크 생성
+        <button class="block-item" draggable="true" data-type="embedding" data-title="모델 선택" data-description="데이터셋당 단일 모델 고정" data-config='{"embeddingModel":"gte-small","embeddingDim":384}'>
+          모델 선택
         </button>
-        <button class="block-item" draggable="true" data-type="index" data-title="임베딩 저장" data-description="nomic-embed-text · cosine" data-config='{"embeddingModel":"nomic-embed-text"}'>
-          임베딩 저장
+        <button class="block-item" draggable="true" data-type="embedding" data-title="청크 벡터화" data-description="청크당 임베딩 생성 및 재인덱싱 관리" data-config='{"chunkSize":800,"overlap":120,"incremental":true}'>
+          청크 벡터화
         </button>
       </div>
     </div>
     <div class="block-category" data-category="검색">
-      <h4>검색 🔍</h4>
+      <h4>4. 검색 🔍</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="search" data-title="하이브리드 검색" data-description="pgvector + BM25" data-config='{"hybrid":true}'>
+        <button class="block-item" draggable="true" data-type="search" data-title="하이브리드 검색" data-description="pgvector + BM25 + 중복 제거" data-config='{"hybrid":true,"dedupe":true,"topK":5}'>
           하이브리드 검색
         </button>
-        <button class="block-item" draggable="true" data-type="search" data-title="키워드 증폭" data-description="키워드 부스트 & 중복 제거" data-config='{"keywordBoost":0.8,"dedupe":true}'>
-          키워드 증폭
+        <button class="block-item" draggable="true" data-type="search" data-title="리랭킹" data-description="top_k · 유사도 임계값 · 메타 필터" data-config='{"rerank":"llm","threshold":0.45,"metaFilters":"{}"}'>
+          리랭킹
         </button>
       </div>
     </div>
-    <div class="block-category" data-category="LLM">
-      <h4>LLM 💬</h4>
+    <div class="block-category" data-category="llm">
+      <h4>5. LLM ✨</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="llm" data-title="근거 기반 응답" data-description="컨텍스트 강제 + 근거 나열" data-config='{"temperature":0.2,"maxTokens":512}'>
-          근거 기반 응답
+        <button class="block-item" draggable="true" data-type="llm" data-title="응답 제어" data-description="온도 · 토큰 · 출력 형식 설정" data-config='{"temperature":0.3,"maxTokens":512,"outputFormat":"free-text"}'>
+          응답 제어
         </button>
-        <button class="block-item" draggable="true" data-type="llm" data-title="JSON 구조화" data-description="정형 출력 & 검증" data-config='{"outputFormat":"json"}'>
-          JSON 구조화
+        <button class="block-item" draggable="true" data-type="llm" data-title="스트리밍 실행" data-description="Ollama 컨테이너 온디맨드 로딩" data-config='{"streaming":true,"model":"llama3.1:8b"}'>
+          스트리밍 실행
         </button>
       </div>
     </div>
-    <div class="block-category" data-category="가드">
-      <h4>가드 🛡️</h4>
+    <div class="block-category" data-category="guard">
+      <h4>6. 가드레일 🛡</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="guard" data-title="PII 필터" data-description="이메일/전화/주민번호 마스킹" data-config='{"maskEmail":true,"maskPhone":true,"maskSsn":true}'>
-          PII 필터
+        <button class="block-item" draggable="true" data-type="guard" data-title="콘텐츠 필터" data-description="PII / 욕설 / 증오 / 불법 / 성인 / 자해 정책" data-config='{"blockCategories":["abuse","hate","illegal","adult","self-harm"],"categoryActions":{"abuse":"mask","hate":"block","illegal":"block","adult":"mask","self-harm":"block"}}'>
+          콘텐츠 필터
         </button>
-        <button class="block-item" draggable="true" data-type="guard" data-title="정책 차단" data-description="욕설/증오/불법 유도 차단" data-config='{"blockCategories":["abuse","hate","illegal"]}'>
-          정책 차단
+        <button class="block-item" draggable="true" data-type="guard" data-title="감사 로그" data-description="허용/마스킹/차단 결과 기록" data-config='{"auditLog":true,"policyMessage":"정책 위반 시 차단했습니다."}'>
+          감사 로그
         </button>
       </div>
     </div>
-    <div class="block-category" data-category="출력">
-      <h4>출력 📦</h4>
+    <div class="block-category" data-category="deploy">
+      <h4>7. 테스트 · 배포 🚀</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="output" data-title="웹앱 공개" data-description="근거 하이라이트 + 링크 공유" data-config='{"displayMode":"webapp"}'>
-          웹앱 공개
+        <button class="block-item" draggable="true" data-type="deploy" data-title="샘플 테스트" data-description="질의 품질 점검 + 로그 확인" data-config='{"displayMode":"webapp","showEvidence":true,"freezeSnapshot":true}'>
+          샘플 테스트
         </button>
-        <button class="block-item" draggable="true" data-type="output" data-title="위젯/임베드" data-description="Widget · Markdown 내보내기" data-config='{"displayMode":"widget","exportOptions":["markdown"]}'>
-          위젯/임베드
-        </button>
-      </div>
-    </div>
-    <div class="block-category" data-category="오케스트레이션">
-      <h4>오케스트레이션 🔀</h4>
-      <div class="block-list">
-        <button class="block-item" draggable="true" data-type="orchestration" data-title="조건 분기" data-description="점수/메타 기반 분기" data-config='{"parallel":false}'>
-          조건 분기
-        </button>
-        <button class="block-item" draggable="true" data-type="orchestration" data-title="병렬 실행" data-description="병렬 처리 + 합류 규칙" data-config='{"parallel":true,"joinStrategy":"all-success"}'>
-          병렬 실행
-        </button>
-      </div>
-    </div>
-    <div class="block-category" data-category="관측">
-      <h4>관측/비용 📊</h4>
-      <div class="block-list">
-        <button class="block-item" draggable="true" data-type="observability" data-title="실행 로그" data-description="토큰/지연 모니터링" data-config='{"costMeter":true}'>
-          실행 로그
-        </button>
-        <button class="block-item" draggable="true" data-type="observability" data-title="알림 훅" data-description="Slack/Webhook 알림" data-config='{"alertHook":""}'>
-          알림 훅
-        </button>
-      </div>
-    </div>
-    <div class="block-category" data-category="접근">
-      <h4>접근 제어 🔐</h4>
-      <div class="block-list">
-        <button class="block-item" draggable="true" data-type="access" data-title="역할 관리" data-description="팀/조직 역할 권한" data-config='{"visibility":"team"}'>
-          역할 관리
-        </button>
-        <button class="block-item" draggable="true" data-type="access" data-title="사용량 제한" data-description="일/월 토큰 한도" data-config='{"dailyQuota":5000}'>
-          사용량 제한
+        <button class="block-item" draggable="true" data-type="deploy" data-title="Freeze & 배포" data-description="pipeline.json · models.lock · dataset.ref 생성" data-config='{"channel":"api","freezeSnapshot":true,"includeAuditLog":true}'>
+          Freeze & 배포
         </button>
       </div>
     </div>
@@ -165,8 +132,8 @@
       <textarea id="question" placeholder="예: 국내선 항공권 등급 제한?"></textarea>
       <label for="answer">예상 응답</label>
       <div id="answer" class="answer-preview">
-        <p><strong>답변:</strong> 이용자는 국내선 경제석만 이용 가능하며, 업그레이드가 필요할 경우 사전 승인을 받아야 합니다.</p>
-        <p class="evidence"><strong>근거:</strong> 여행 경비 규정 3.2.1 / 페이지 15</p>
+        <p><strong>답변:</strong> 해당 규정에 따르면 국내선은 경제석으로 제한되며, 예외 적용 시 사전 승인이 필요합니다.</p>
+        <p class="evidence"><strong>근거:</strong> 여행 경비 규정 · Section 3.2.1 · Page 15</p>
       </div>
       <div class="sandbox-actions">
         <button class="primary">테스트 실행</button>
@@ -212,18 +179,18 @@
     </div>
     <div class="inspector-section">
       <h4>배포 옵션</h4>
-      <button class="primary full-width">웹앱 생성</button>
+      <button class="primary full-width">웹앱 링크 공유</button>
       <button class="secondary full-width">위젯 코드 복사</button>
-      <button class="ghost full-width">API 엔드포인트 보기</button>
+      <button class="ghost full-width">REST API 보기</button>
     </div>
   </aside>
 </section>
 
 <section class="callout">
-  <h2>AI 파이프라인을 빠르게 실험하고 배포하세요.</h2>
+  <h2>Freeze로 스냅샷을 잠그고, 원하는 방식으로 배포하세요.</h2>
   <p>
-    로컬 무료 스택 기반으로 설계되어 교육 현장과 사내 PoC에 부담 없이 도입할 수 있습니다. 실제 기능 개발 전,
-    사용자 여정과 인터페이스를 점검하는 용도로 활용하세요.
+    MinIO 원본, Postgres(pgvector) 인덱스, Ollama/SBERT 모델 컨테이너를 온디맨드로 로딩해 “드래그 후 즉시 사용” 경험을 제공합니다.
+    스냅샷이 생성되면 웹앱, 위젯, API 중 원하는 채널로 동일한 파이프라인을 일관되게 배포할 수 있습니다.
   </p>
 </section>
 {% endblock %}
