@@ -1,200 +1,128 @@
 {% extends "base.html" %}
-{% block title %}Drag & Drop RAG 파이프라인 빌더{% endblock %}
+{% block title %}드래그 앤 드롭 · RAG 파이프라인 빌더{% endblock %}
 {% block content %}
+
 <section class="hero">
   <div>
-    <h1>🧱 Drag & Drop AI Pipeline Builder</h1>
-    <p>
-      문서를 올리고, 전처리·임베딩·검색·LLM·가드레일까지 블록으로 이어 붙인 뒤 Freeze 한 번으로
-      웹앱 · 위젯 · API 배포까지 이어지는 원페이지 인터랙티브 데모입니다.
-      좌측 블록 라이브러리에서 필요한 스텝을 끌어와 캔버스에 배치하고, 우측 패널에서 파라미터를 바로 조정하세요.
-    </p>
+    <h1>드래그 앤 드롭 파이프라인 빌더</h1>
+    <p>왼쪽에서 블록을 끌어 가운데 캔버스에 놓고, 오른쪽에서 설정을 바꿔 보세요.</p>
     <div class="hero-actions">
-      <a class="btn primary" href="#builder">캔버스 살펴보기</a>
-      <a class="btn secondary" href="/project-overview">프로젝트 설명 보기</a>
+      <button id="auto-arrange" class="btn secondary">자동 정렬</button>
+      <button id="clear-canvas" class="btn secondary">모두 지우기</button>
     </div>
   </div>
-  <div class="hero-card">
-    <h2>빠른 시작</h2>
-    <ol>
-      <li>템플릿을 불러오거나 빈 캔버스를 사용하세요.</li>
-      <li>업로드 → 전처리 → 임베딩 → 검색 → LLM → 가드레일 블록을 순서대로 연결하세요.</li>
-      <li>샘플 질문으로 품질을 검증하고 Freeze로 스냅샷을 고정한 뒤 배포 방식을 고르세요.</li>
-    </ol>
+  <div class="hero-card template-callout">
+    <h2 style="margin:0 0 8px 0;">템플릿</h2>
+    <select id="template-selector">
+      <option value="document-qa">문서 Q&A</option>
+      <option value="regulation">규정/컴플라이언스</option>
+    </select>
+    <div class="template-actions">
+      <button id="apply-template" class="btn primary">적용</button>
+      <button class="template-pill" data-template="document-qa">Q&A</button>
+      <button class="template-pill" data-template="regulation">규정</button>
+    </div>
   </div>
 </section>
 
-<section id="builder" class="builder-grid">
+<section class="builder-grid">
+  <!-- Block Library -->
   <aside class="panel block-library">
     <h3>블록 라이브러리</h3>
-    <p class="muted">필요한 블록을 캔버스로 드래그 앤 드랍하고, 우측 속성 패널에서 세부 파라미터를 조정하세요.</p>
-    
-    <div class="block-category" data-category="업로드">
-      <h4>1. 업로드 📂</h4>
+    <p class="muted">아래 블록을 끌어 캔버스에 놓으세요.</p>
+
+    <div class="block-category">
+      <h4>입력/전처리</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="upload" data-title="문서 업로드" data-description="이름 · 설명 · 권한 설정 후 Presigned URL 업로드" data-config='{"sourceType":"upload","duplicateCheck":true}'>
+        <button class="block-item" draggable="true" data-type="data" data-title="문서 업로드" data-description="브라우저→MinIO 직업로드">
           문서 업로드
         </button>
-        <button class="block-item" draggable="true" data-type="upload" data-title="버전 관리" data-description="Freeze 전에 SHA-256 중복 검사" data-config='{"duplicateCheck":true,"autoIndexing":false,"presignedExpiry":30}'>
-          버전 관리
+        <button class="block-item" draggable="true" data-type="preprocess" data-title="전처리" data-description="정규화/언어감지/PII 마스킹">
+          전처리
         </button>
       </div>
     </div>
-    <div class="block-category" data-category="전처리">
-      <h4>2. 전처리 🔧</h4>
+
+    <div class="block-category">
+      <h4>인덱싱/검색</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="preprocess" data-title="정규화 & 언어 감지" data-description="공백/개행 정리 + 자동 언어 변환" data-config='{"normalization":true,"language":"auto"}'>
-          정규화 & 언어 감지
+        <button class="block-item" draggable="true" data-type="index" data-title="청크+임베딩" data-description="chunk 800 / overlap 120">
+          청크+임베딩
         </button>
-        <button class="block-item" draggable="true" data-type="preprocess" data-title="표·코드 보존" data-description="표/코드 태깅 + PII 마스킹" data-config='{"preserveTables":true,"piiMasking":true}'>
-          표·코드 보존
-        </button>
-        <button class="block-item" draggable="true" data-type="preprocess" data-title="사용자 필터" data-description="정규식 기반 필터링" data-config='{"customRegex":"(?i)draft"}'>
-          사용자 필터
+        <button class="block-item" draggable="true" data-type="search" data-title="검색" data-description="kNN 검색, threshold">
+          검색
         </button>
       </div>
     </div>
-    <div class="block-category" data-category="임베딩">
-      <h4>3. 임베딩 🧠</h4>
+
+    <div class="block-category">
+      <h4>생성/가드</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="embedding" data-title="모델 선택" data-description="데이터셋당 단일 모델 고정" data-config='{"embeddingModel":"gte-small","embeddingDim":384}'>
-          모델 선택
+        <button class="block-item" draggable="true" data-type="llm" data-title="LLM 생성" data-description="Ollama 모델 호출">
+          LLM 생성
         </button>
-        <button class="block-item" draggable="true" data-type="embedding" data-title="청크 벡터화" data-description="청크당 임베딩 생성 및 재인덱싱 관리" data-config='{"chunkSize":800,"overlap":120,"incremental":true}'>
-          청크 벡터화
+        <button class="block-item" draggable="true" data-type="guard" data-title="가드레일" data-description="PII 마스킹/금칙어">
+          가드레일
         </button>
       </div>
     </div>
-    <div class="block-category" data-category="검색">
-      <h4>4. 검색 🔍</h4>
+
+    <div class="block-category">
+      <h4>출력/배포</h4>
       <div class="block-list">
-        <button class="block-item" draggable="true" data-type="search" data-title="하이브리드 검색" data-description="pgvector + BM25 + 중복 제거" data-config='{"hybrid":true,"dedupe":true,"topK":5}'>
-          하이브리드 검색
+        <button class="block-item" draggable="true" data-type="output" data-title="출력" data-description="웹/JSON">
+          출력
         </button>
-        <button class="block-item" draggable="true" data-type="search" data-title="리랭킹" data-description="top_k · 유사도 임계값 · 메타 필터" data-config='{"rerank":"llm","threshold":0.45,"metaFilters":"{}"}'>
-          리랭킹
-        </button>
-      </div>
-    </div>
-    <div class="block-category" data-category="llm">
-      <h4>5. LLM ✨</h4>
-      <div class="block-list">
-        <button class="block-item" draggable="true" data-type="llm" data-title="응답 제어" data-description="온도 · 토큰 · 출력 형식 설정" data-config='{"temperature":0.3,"maxTokens":512,"outputFormat":"free-text"}'>
-          응답 제어
-        </button>
-        <button class="block-item" draggable="true" data-type="llm" data-title="스트리밍 실행" data-description="Ollama 컨테이너 온디맨드 로딩" data-config='{"streaming":true,"model":"llama3.1:8b"}'>
-          스트리밍 실행
-        </button>
-      </div>
-    </div>
-    <div class="block-category" data-category="guard">
-      <h4>6. 가드레일 🛡</h4>
-      <div class="block-list">
-        <button class="block-item" draggable="true" data-type="guard" data-title="콘텐츠 필터" data-description="PII / 욕설 / 증오 / 불법 / 성인 / 자해 정책" data-config='{"blockCategories":["abuse","hate","illegal","adult","self-harm"],"categoryActions":{"abuse":"mask","hate":"block","illegal":"block","adult":"mask","self-harm":"block"}}'>
-          콘텐츠 필터
-        </button>
-        <button class="block-item" draggable="true" data-type="guard" data-title="감사 로그" data-description="허용/마스킹/차단 결과 기록" data-config='{"auditLog":true,"policyMessage":"정책 위반 시 차단했습니다."}'>
-          감사 로그
-        </button>
-      </div>
-    </div>
-    <div class="block-category" data-category="deploy">
-      <h4>7. 테스트 · 배포 🚀</h4>
-      <div class="block-list">
-        <button class="block-item" draggable="true" data-type="deploy" data-title="샘플 테스트" data-description="질의 품질 점검 + 로그 확인" data-config='{"displayMode":"webapp","showEvidence":true,"freezeSnapshot":true}'>
-          샘플 테스트
-        </button>
-        <button class="block-item" draggable="true" data-type="deploy" data-title="Freeze & 배포" data-description="pipeline.json · models.lock · dataset.ref 생성" data-config='{"channel":"api","freezeSnapshot":true,"includeAuditLog":true}'>
-          Freeze & 배포
+        <button class="block-item" draggable="true" data-type="deploy" data-title="배포" data-description="링크/위젯/API">
+          배포
         </button>
       </div>
     </div>
   </aside>
 
-  <section class="canvas">
+  <!-- Canvas -->
+  <section class="canvas panel">
     <div class="canvas-header">
-      <h3>파이프라인 캔버스</h3>
+      <h3 style="margin:0">파이프라인 캔버스</h3>
       <div class="canvas-actions">
-        <button class="ghost" id="clear-canvas">초기화</button>
-        <button class="ghost" id="auto-arrange">자동 정렬</button>
+        <button id="duplicate-node" class="btn secondary">복제</button>
+        <button id="delete-node" class="btn secondary">삭제</button>
       </div>
     </div>
-    <div class="canvas-body" id="pipeline-canvas" data-empty-text="블록을 끌어다 여기에 배치하세요.">
+    <div class="canvas-body" id="pipeline-canvas">
       <svg id="edges-layer" class="edges-layer"></svg>
-      <div class="canvas-empty" id="canvas-empty-state">
-        <p>블록을 끌어다 여기에 배치하세요.</p>
-        <p class="muted">템플릿을 불러오면 기본 파이프라인이 자동으로 구성됩니다.</p>
-      </div>
-    </div>
-    <div class="sandbox">
-      <h4>샌드박스 테스트</h4>
-      <label for="question">질문</label>
-      <textarea id="question" placeholder="예: 국내선 항공권 등급 제한?"></textarea>
-      <label for="answer">예상 응답</label>
-      <div id="answer" class="answer-preview">
-        <p><strong>답변:</strong> 해당 규정에 따르면 국내선은 경제석으로 제한되며, 예외 적용 시 사전 승인이 필요합니다.</p>
-        <p class="evidence"><strong>근거:</strong> 여행 경비 규정 · Section 3.2.1 · Page 15</p>
-      </div>
-      <div class="sandbox-actions">
-        <button class="primary">테스트 실행</button>
-        <button class="ghost">로그 보기</button>
+      <div id="canvas-empty-state" class="canvas-empty">
+        왼쪽에서 블록을 끌어와서 배치하세요
       </div>
     </div>
   </section>
 
+  <!-- Inspector -->
   <aside class="panel inspector">
-    <h3>속성 패널</h3>
+    <h3>설정</h3>
     <div class="inspector-section">
-      <h4>블록 정보</h4>
-      <p class="muted">현재 선택: <strong id="inspector-selection">블록을 선택하세요</strong></p>
-      <p id="inspector-description" class="inspector-description">캔버스에서 블록을 선택하면 상세 설명이 표시됩니다.</p>
+      <div id="inspector-selection" class="muted">선택된 블록 없음</div>
+      <p id="inspector-description" class="muted"></p>
     </div>
+
+    <div id="inspector-metrics" class="inspector-section"></div>
+
     <div class="inspector-section">
       <h4>공통 설정</h4>
-      <div id="inspector-common" class="form-grid"></div>
+      <div id="inspector-common"></div>
     </div>
+
     <div class="inspector-section">
-      <h4>세부 설정</h4>
-      <div id="inspector-specific" class="form-grid"></div>
+      <h4>블록별 설정</h4>
+      <div id="inspector-specific"></div>
     </div>
-    <div class="inspector-section">
-      <p id="inspector-validation" class="validation muted">필수 항목을 입력하면 검증 결과가 표시됩니다.</p>
-    </div>
-    <div class="inspector-section">
-      <label for="config-text">구성 미리보기</label>
-      <textarea id="config-text" readonly placeholder="선택된 블록의 구성 JSON"></textarea>
-    </div>
-    <div class="inspector-section">
-      <label>실행 메트릭</label>
-      <ul class="metrics" id="inspector-metrics">
-        <li>평균 지연: <strong>—</strong></li>
-        <li>토큰 사용량: <strong>—</strong></li>
-        <li>성공률: <strong>—</strong></li>
-      </ul>
-    </div>
-    <div class="inspector-section">
-      <h4>작업</h4>
-      <button class="primary full-width" id="duplicate-node" disabled>블록 복제</button>
-      <button class="secondary full-width" id="delete-node" disabled>블록 삭제</button>
-    </div>
-    <div class="inspector-section">
-      <h4>배포 옵션</h4>
-      <button class="primary full-width">웹앱 링크 공유</button>
-      <button class="secondary full-width">위젯 코드 복사</button>
-      <button class="ghost full-width">REST API 보기</button>
-    </div>
+
+    <div id="inspector-validation" class="validation muted"></div>
   </aside>
 </section>
 
-<section class="callout">
-  <h2>Freeze로 스냅샷을 잠그고, 원하는 방식으로 배포하세요.</h2>
-  <p>
-    MinIO 원본, Postgres(pgvector) 인덱스, Ollama/SBERT 모델 컨테이너를 온디맨드로 로딩해 “드래그 후 즉시 사용” 경험을 제공합니다.
-    스냅샷이 생성되면 웹앱, 위젯, API 중 원하는 채널로 동일한 파이프라인을 일관되게 배포할 수 있습니다.
-  </p>
-</section>
 {% endblock %}
-
 {% block scripts %}
-<script src="{{ url_for('static', path='builder.js') }}" defer></script>
+  <script src="{{ url_for('static', path='builder.js') }}"></script>
+  <script src="{{ url_for('static', path='ui.js') }}"></script>
 {% endblock %}

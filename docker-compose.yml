@@ -1,6 +1,14 @@
-version: "3.9"
-
 services:
+  ui:
+    image: python:3.11-slim
+    working_dir: /app
+    command: sh -c "pip install --no-cache-dir fastapi uvicorn[standard] jinja2 && uvicorn app.main:app --host 0.0.0.0 --port 3000"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app:ro
+    networks:
+      - ragnet
   api:
     build:
       context: .
@@ -46,6 +54,11 @@ services:
     command: uvicorn embedding_svc.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8001:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - ragnet
 
@@ -58,13 +71,13 @@ services:
       - ragnet
 
   postgres:
-    image: ankane/pgvector:0.5.1
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
+    # 호스트 포트 노출을 제거해 Windows 포트 바인딩 충돌을 회피합니다.
+    # 내부 서비스들은 `postgres:5432`로 접근합니다.
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./infra/initdb:/docker-entrypoint-initdb.d
@@ -77,14 +90,14 @@ services:
       - ragnet
 
   minio:
-    image: minio/minio:RELEASE.2024-04-18T19-09-19Z
+    image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
     ports:
       - "9000:9000"
-      - "9001:9001"
+      - "9002:9001"
     volumes:
       - minio-data:/data
     healthcheck:
@@ -96,7 +109,7 @@ services:
       - ragnet
 
   createbuckets:
-    image: minio/mc:RELEASE.2024-04-18T17-06-04Z
+    image: minio/mc:latest
     depends_on:
       minio:
         condition: service_healthy

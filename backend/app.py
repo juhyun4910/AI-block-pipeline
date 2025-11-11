@@ -17,6 +17,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from prometheus_client import Counter, Histogram, generate_latest
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.routers import (
     admin,
@@ -47,6 +48,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="AI Block Pipeline", lifespan=lifespan)
+
+# CORS: 브라우저에서 UI(3000) → API(8000) 호출 허용
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # 한국어 주석: 공통 요청 ID를 생성하여 로그 상관관계를 단순화합니다.

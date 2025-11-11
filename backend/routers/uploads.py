@@ -17,6 +17,7 @@ from backend.deps.db import get_session
 from backend.deps.minio import get_minio
 from backend.deps.rate_limit import enforce_rate_limit
 from backend.deps.settings import settings
+from urllib.parse import urlparse, urlunparse
 from backend.models.schema import (
     UploadCheckRequest,
     UploadCheckResponse,
@@ -66,7 +67,16 @@ async def presign_upload(
     policy.set_content_length_range(1, settings.upload_max_size_mb * 1024 * 1024)
     policy.set_expiration(dt.datetime.utcnow() + expires)
     url, fields = client.presigned_post_policy(policy)
-    return UploadPresignResponse(url=url, fields={**fields, "key": object_key})
+    # 브라우저 접근 가능한 공개 엔드포인트로 URL 재작성
+    public = settings.minio_public_endpoint or "http://localhost:9000"
+    try:
+        pu = urlparse(public)
+        uu = urlparse(url)
+        # scheme/netloc만 공개용으로 교체
+        new_url = urlunparse((pu.scheme or uu.scheme, pu.netloc or uu.netloc, uu.path, uu.params, uu.query, uu.fragment))
+    except Exception:  # pragma: no cover - 방어적 처리
+        new_url = url
+    return UploadPresignResponse(url=new_url, fields={**fields, "key": object_key})
 
 
 @router.post("/commit", response_model=UploadCommitResponse)

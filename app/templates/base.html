@@ -3,23 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}AI Block Pipeline Mockup{% endblock %}</title>
+    <title>{% block title %}문서 RAG 파이프라인{% endblock %}</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
   </head>
   <body>
     <header class="top-nav">
-      <div class="logo">AI Block Pipeline</div>
+      <div class="logo">문서 RAG 파이프라인</div>
       <nav class="nav-links">
-        <a href="/">파이프라인 빌더</a>
-        <a href="/project-overview">프로젝트 설명</a>
+        <a href="/">대시보드</a>
+        <a href="/project-overview">프로젝트 개요</a>
       </nav>
     </header>
     <main class="page-container">
       {% block content %}{% endblock %}
     </main>
     <footer class="footer">
-      <p>© 2024 Drag-and-Drop AI Pipeline Builder</p>
+      <p>© 2024 RAG Pipeline MVP</p>
     </footer>
     {% block scripts %}{% endblock %}
   </body>

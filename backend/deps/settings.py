@@ -19,6 +19,8 @@ class Settings(BaseModel):
     minio_access_key: str = Field(alias="MINIO_ACCESS_KEY")
     minio_secret_key: str = Field(alias="MINIO_SECRET_KEY")
     minio_bucket: str = Field(alias="MINIO_BUCKET")
+    # 브라우저 업로드용 공개 엔드포인트 (예: http://localhost:9000). 미설정 시 MINIO_ENDPOINT를 사용.
+    minio_public_endpoint: str | None = Field(alias="MINIO_PUBLIC_ENDPOINT", default=None)
     ollama_host: str = Field(alias="OLLAMA_HOST")
     embedding_svc: str = Field(alias="EMBEDDING_SVC")
     jwt_secret: str = Field(alias="JWT_SECRET")
