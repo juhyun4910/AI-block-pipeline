@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-worker
+  template:
+    metadata:
+      labels:
+        app: rag-worker
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/example/rag-api:latest
+          command: ["celery", "-A", "backend.workers.celery_app", "worker", "-l", "info"]
+          envFrom:
+            - secretRef:
+                name: rag-env

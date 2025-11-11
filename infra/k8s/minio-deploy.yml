@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rag-minio
+spec:
+  serviceName: rag-minio
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-minio
+  template:
+    metadata:
+      labels:
+        app: rag-minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2024-04-18T19-09-19Z
+          args: ["server", "/data", "--console-address", ":9001"]
+          env:
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rag-env
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rag-env
+                  key: MINIO_SECRET_KEY
+          ports:
+            - containerPort: 9000
+            - containerPort: 9001
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: minio-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-minio
+spec:
+  selector:
+    app: rag-minio
+  ports:
+    - name: api
+      port: 9000
+    - name: console
+      port: 9001

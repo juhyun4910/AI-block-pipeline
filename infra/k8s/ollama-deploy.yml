@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-ollama
+  template:
+    metadata:
+      labels:
+        app: rag-ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:0.1.27
+          ports:
+            - containerPort: 11434
+          env:
+            - name: OLLAMA_KEEP_ALIVE
+              value: "24h"
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+      volumes:
+        - name: ollama-data
+          persistentVolumeClaim:
+            claimName: ollama-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-ollama
+spec:
+  selector:
+    app: rag-ollama
+  ports:
+    - port: 11434
+      targetPort: 11434
